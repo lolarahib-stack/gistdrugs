@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GIST Drug Test — Final List</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f8f7f4; --surface: #ffffff; --border: #e2e0da; --border-strong: #c8c5bc;
+    --text: #1a1916; --text-muted: #6b6860; --text-dim: #a09e98; --accent: #1a5fa8;
+    --p1-bg: #eaf3de; --p1-text: #2d5a0e; --p1-border: #8fbe5a;
+    --p2-bg: #faeeda; --p2-text: #7a4a08; --p2-border: #e8a030;
+    --keep-bg: #eaf3de; --keep-text: #2d5a0e;
+    --add-bg: #e6f1fb; --add-text: #0e4a8a;
+    --remove-bg: #fcebeb; --remove-text: #8a1f1f;
+    --flag-bg: #faeeda; --flag-text: #7a4a08;
+    --row-hover: #f2f0eb;
+    --patient-bg: #fff8e6; --patient-border: #e8a030;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px; line-height: 1.5; padding: 32px 28px 60px; }
+
+  header { margin-bottom: 20px; }
+  header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 3px; }
+  header p { font-size: 12px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
+
+  .patient-banner {
+    background: var(--patient-bg); border: 1px solid var(--patient-border);
+    border-left: 4px solid var(--patient-border); border-radius: 6px;
+    padding: 12px 16px; margin-bottom: 20px; font-size: 12px; line-height: 1.7;
+  }
+  .patient-banner strong { font-weight: 600; color: #5a3a00; }
+  .patient-banner .pt-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    font-weight: 600; color: #7a4a08; text-transform: uppercase; letter-spacing: 0.05em;
+    margin-bottom: 6px; display: block; }
+  .pt-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .pt-tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 3px; }
+  .pt-confirmed { background: #eaf3de; color: #2d5a0e; border: 1px solid #8fbe5a; }
+  .pt-pending { background: #fcebeb; color: #8a1f1f; border: 1px solid #d48a8a; }
+  .pt-uncertain { background: var(--flag-bg); color: var(--flag-text); border: 1px solid var(--p2-border); }
+
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .legend-group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .legend-label { font-size: 11px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
+
+  .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px;
+    border-radius: 3px; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; }
+  .b-p1     { background: var(--p1-bg); color: var(--p1-text); border: 1px solid var(--p1-border); }
+  .b-p2     { background: var(--p2-bg); color: var(--p2-text); border: 1px solid var(--p2-border); }
+  .b-keep   { background: var(--keep-bg); color: var(--keep-text); border: 1px solid #8fbe5a; }
+  .b-add    { background: var(--add-bg); color: var(--add-text); border: 1px solid #5a9fd4; }
+  .b-remove { background: var(--remove-bg); color: var(--remove-text); border: 1px solid #d48a8a; }
+  .b-flag   { background: var(--flag-bg); color: var(--flag-text); border: 1px solid var(--p2-border); }
+  .b-imat   { background: #d4edda; color: #1a4d28; border: 1px solid #8fbe5a; }
+  .b-sdh    { background: #e8e4f8; color: #3a2880; border: 1px solid #9b8edc; }
+  .b-new    { background: #e6f1fb; color: #0e4a8a; border: 1px solid #5a9fd4; }
+  .b-pt-relevant { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+  .b-pt-uncertain { background: #fff8e6; color: #7a4a08; border: 1px solid #e8a030; }
+  .b-pt-low { background: #f1efe8; color: #5f5e5a; border: 1px solid #c8c5bc; }
+
+  .filters { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .filter-btn { background: var(--surface); border: 1px solid var(--border-strong);
+    color: var(--text-muted); padding: 4px 10px; border-radius: 3px; font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace; cursor: pointer; transition: all 0.12s; }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .count-bar { font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    color: var(--text-muted); margin-bottom: 10px; }
+  .count-bar span { color: var(--accent); font-weight: 600; }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border-strong);
+    border-radius: 6px; background: var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead { background: #f0ede6; position: sticky; top: 0; z-index: 2; }
+  thead th { padding: 9px 11px; text-align: left; font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.07em;
+    text-transform: uppercase; border-bottom: 1px solid var(--border-strong); white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.08s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--row-hover); }
+  tbody tr.s-imat { border-left: 3px solid #8fbe5a; }
+  tbody tr.s-sdh  { border-left: 3px solid #9b8edc; }
+  tbody tr.s-both { border-left: 3px solid #e8a030; }
+  tbody td { padding: 9px 11px; vertical-align: top; }
+
+  .drug-name { font-weight: 600; font-size: 12px; color: var(--text); white-space: nowrap; }
+  .drug-sub  { font-size: 10px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; margin-top: 1px; }
+  .mech-cell { max-width: 200px; font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+  .mech-target { font-weight: 600; color: var(--text); font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; display: block; margin-bottom: 2px; }
+  .ev-cell { max-width: 170px; font-size: 11px; line-height: 1.5; color: var(--text-muted); }
+  .ev-link { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+    color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(26,95,168,0.3); margin-top: 2px; }
+  .ev-link:hover { border-color: var(--accent); }
+  .notes-cell { max-width: 190px; font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+  .fn { display: inline-block; font-size: 10px; font-family: 'IBM Plex Mono', monospace;
+    color: var(--flag-text); background: var(--flag-bg); border: 1px solid var(--p2-border);
+    border-radius: 3px; padding: 1px 5px; margin-top: 2px; }
+  .pt-cell { min-width: 100px; }
+
+  .section-divider td { background: #ece9e1; font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.07em;
+    text-transform: uppercase; padding: 5px 11px; border-bottom: 1px solid var(--border-strong);
+    border-top: 1px solid var(--border-strong); }
+
+  .hidden { display: none; }
+
+  footer { margin-top: 22px; font-size: 11px; color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace; border-top: 1px solid var(--border);
+    padding-top: 12px; line-height: 1.8; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>GIST Drug Test — Final List</h1>
+  <p>Lola &amp; Kyan · Priority assignments · mechanism · patient relevance</p>
+</header>
+
+<div class="patient-banner">
+  <span class="pt-title">Patient molecular profile</span>
+  <div style="color:#5a3a00; font-size:12px;">This patient's profile significantly affects drug relevance. KIT IHC positive does <strong>not</strong> confirm KIT-driven disease — it is a diagnostic marker only. No KIT driver mutation means KIT-targeted agents lose their primary rationale. SDH status is unresolved pending SDHA IHC.</div>
+  <div class="pt-tags">
+    <span class="pt-tag pt-confirmed">KIT IHC positive</span>
+    <span class="pt-tag pt-confirmed">No KIT mutation</span>
+    <span class="pt-tag pt-confirmed">No PDGFRA mutation</span>
+    <span class="pt-tag pt-uncertain">SDHA VUS (uncertain significance)</span>
+    <span class="pt-tag pt-confirmed">SDHB IHC positive (retained)</span>
+    <span class="pt-tag pt-pending">⚑ SDHA IHC pending — critical</span>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-group">
+    <span class="legend-label">Priority:</span>
+    <span class="badge b-p1">Priority 1</span>
+    <span class="badge b-p2">Priority 2</span>
+  </div>
+  <div class="legend-group">
+    <span class="legend-label">Decision:</span>
+    <span class="badge b-keep">Keep</span>
+    <span class="badge b-add">Add to P1</span>
+    <span class="badge b-remove">Remove</span>
+  </div>
+  <div class="legend-group">
+    <span class="legend-label">Setting:</span>
+    <span class="badge b-imat">Imat-resistant</span>
+    <span class="badge b-sdh">SDH-deficient</span>
+  </div>
+  <div class="legend-group">
+    <span class="legend-label">This patient:</span>
+    <span class="badge b-pt-relevant">Relevant</span>
+    <span class="badge b-pt-uncertain">If SDH confirmed</span>
+    <span class="badge b-pt-low">Low rationale</span>
+  </div>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="f('all',event)">All</button>
+  <button class="filter-btn" onclick="f('p1',event)">Priority 1</button>
+  <button class="filter-btn" onclick="f('p2',event)">Priority 2</button>
+  <button class="filter-btn" onclick="f('sdh',event)">SDH-deficient</button>
+  <button class="filter-btn" onclick="f('imat',event)">Imat-resistant</button>
+  <button class="filter-btn" onclick="f('add',event)">Added to P1</button>
+  <button class="filter-btn" onclick="f('remove',event)">Removed</button>
+  <button class="filter-btn" onclick="f('pt',event)">Relevant this patient</button>
+</div>
+
+<div class="count-bar">Showing <span id="rc">29</span> drugs</div>
+
+<div class="table-wrap">
+<table id="dt">
+<thead>
+  <tr>
+    <th>Drug / combination</th>
+    <th>Setting</th>
+    <th>Kyan list</th>
+    <th>Final decision</th>
+    <th>Mechanism</th>
+    <th>Evidence</th>
+    <th>Notes</th>
+    <th>This patient</th>
+  </tr>
+</thead>
+<tbody>
+
+<!-- ══════════════════════════════════════════
+     PRIORITY 1 — KEEP
+══════════════════════════════════════════ -->
+<tr class="section-divider"><td colspan="8">Priority 1 — keeping</td></tr>
+
+<tr data-p="p1" data-s="imat" data-d="keep" data-pt="low">
+  <td><div class="drug-name">Sunitinib</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p1">Priority 1</span></td>
+  <td><span class="badge b-keep">Keep P1</span></td>
+  <td class="mech-cell"><span class="mech-target">KIT · PDGFRA · VEGFR1–3 · RET · CSF1R</span>Multi-kinase inhibitor; targets ATP-binding domain KIT exon 13/14. Standard 2nd-line in KIT-mutant disease. Anti-angiogenic activity via VEGFR may retain some relevance regardless of KIT mutation status.</td>
+  <td class="ev-cell">Phase III — Demetri et al.<br><a class="ev-link" href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(06)69446-4/abstract" target="_blank">Lancet 2006 →</a></td>
+  <td class="notes-cell">Approved 2nd-line. TTP 27.3 vs 6.4 wks (HR 0.33). Core combination partner for bezuclastinib and CGT9486.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Low rationale</span><div class="drug-sub" style="margin-top:4px;">No KIT driver mutation. VEGFR activity only.</div></td>
+</tr>
+
+<tr data-p="p1" data-s="imat" data-d="keep" data-pt="low">
+  <td><div class="drug-name">Regorafenib</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p1">Priority 1</span></td>
+  <td><span class="badge b-keep">Keep P1</span></td>
+  <td class="mech-cell"><span class="mech-target">KIT · VEGFR1–3 · PDGFR · RAF · RET</span>Fluorinated sorafenib analogue. Approved 3rd-line in KIT-mutant imatinib/sunitinib refractory GIST.</td>
+  <td class="ev-cell">Phase III GRID — Demetri et al.<br><a class="ev-link" href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(12)61857-1/abstract" target="_blank">Lancet 2013 →</a></td>
+  <td class="notes-cell">PFS 4.8 vs 0.9 months (HR 0.27). Dose-limiting hand-foot syndrome. Approved 3rd-line standard.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Low rationale</span><div class="drug-sub" style="margin-top:4px;">No KIT driver mutation. VEGFR only.</div></td>
+</tr>
+
+<tr data-p="p1" data-s="sdh" data-d="keep" data-pt="sdh">
+  <td><div class="drug-name">Temozolomide</div></td>
+  <td><span class="badge b-sdh">SDH-deficient</span></td>
+  <td><span class="badge b-p1">Priority 1</span></td>
+  <td><span class="badge b-keep">Keep P1</span></td>
+  <td class="mech-cell"><span class="mech-target">DNA alkylation → MGMT dependence</span>Alkylating agent. SDH-loss → MGMT promoter hypermethylation → tumour cannot repair O6-methylguanine adducts. Mechanistically distinct from DNMTis.</td>
+  <td class="ev-cell">2 active trials: NCT03556384 (FDA) · NCT05661643 (China)<div class="drug-sub">No results yet</div></td>
+  <td class="notes-cell">Most promising active strategy in SDH-deficient GIST. Guadecitabine (DNMTi) failure does not undermine TMZ — different mechanism entirely.</td>
+  <td class="pt-cell"><span class="badge b-pt-uncertain">If SDH confirmed</span><div class="drug-sub" style="margin-top:4px;">Await SDHA IHC. If positive: strongest agent on list.</div></td>
+</tr>
+
+<tr data-p="p1" data-s="sdh" data-d="keep" data-pt="sdh">
+  <td><div class="drug-name">Olverembatinib</div></td>
+  <td><span class="badge b-sdh">SDH-deficient</span></td>
+  <td><span class="badge b-p1">Priority 1</span></td>
+  <td><span class="badge b-keep">Keep P1</span></td>
+  <td class="mech-cell"><span class="mech-target">BCR-ABL · KIT · PDGFRA (3rd gen)</span>3rd-generation TKI with activity in SDH-deficient GIST. First Phase III specifically in this population.</td>
+  <td class="ev-cell">Phase III ongoing NCT06640361<br>ASCO 2024:<br><a class="ev-link" href="https://ascopubs.org/doi/10.1200/JCO.2024.42.16_suppl.11502" target="_blank">JCO 2024 suppl →</a></td>
+  <td class="notes-cell">First-ever Phase III in SDH-deficient GIST. Landmark trial — no approved targeted therapy exists in this population.</td>
+  <td class="pt-cell"><span class="badge b-pt-uncertain">If SDH confirmed</span><div class="drug-sub" style="margin-top:4px;">Only Phase III in SDH-deficient — highest priority if confirmed.</div></td>
+</tr>
+
+<tr data-p="p1" data-s="imat" data-d="keep" data-pt="pt">
+  <td><div class="drug-name">Cabozantinib</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p1">Priority 1</span></td>
+  <td><span class="badge b-keep">Keep P1</span></td>
+  <td class="mech-cell"><span class="mech-target">MET · VEGFR2 · KIT · RET · AXL · TRKB</span>Multi-kinase inhibitor. MET and AXL activation are documented bypass resistance mechanisms in imatinib-resistant and KIT-mutation-negative GIST independently of KIT mutation status.</td>
+  <td class="ev-cell">Phase II (imat + sunit refractory):<br><a class="ev-link" href="https://www.sciencedirect.com/science/article/abs/pii/S0959804920302240" target="_blank">Eur J Cancer 2020 →</a></td>
+  <td class="notes-cell">MET/AXL coverage distinguishes it from regorafenib. Rationale extends beyond KIT inhibition — relevant in KIT-mutation-negative disease.</td>
+  <td class="pt-cell"><span class="badge b-pt-relevant">Relevant</span><div class="drug-sub" style="margin-top:4px;">MET/AXL relevant regardless of KIT mutation. Priority agent for this patient.</div></td>
+</tr>
+
+<tr data-p="p1" data-s="sdh" data-d="keep" data-pt="sdh">
+  <td><div class="drug-name">Pemigatinib</div></td>
+  <td><span class="badge b-sdh">SDH-deficient</span></td>
+  <td><span class="badge b-p1">Priority 1</span></td>
+  <td><span class="badge b-keep">Keep P1</span></td>
+  <td class="mech-cell"><span class="mech-target">FGFR1 · FGFR2 · FGFR3 (selective)</span>FGFR1/2/3-selective inhibitor (spares FGFR4). FGFR1 and FGFR2 are the FGFR subtypes most consistently upregulated in SDH-deficient GIST via HIF-1α pseudohypoxia. More targeted than pan-FGFR.</td>
+  <td class="ev-cell">Trial open: NCT07434843<div class="drug-sub">No efficacy data yet</div></td>
+  <td class="notes-cell">FGFR1/2 selectivity maps better onto SDH-GIST biology than erdafitinib. First dedicated trial now open.</td>
+  <td class="pt-cell"><span class="badge b-pt-uncertain">If SDH confirmed</span><div class="drug-sub" style="margin-top:4px;">FGFR upregulation downstream of SDH-loss pseudohypoxia.</div></td>
+</tr>
+
+<tr data-p="p1" data-s="sdh" data-d="keep" data-pt="sdh">
+  <td><div class="drug-name">Rogaratinib</div></td>
+  <td><span class="badge b-sdh">SDH-deficient</span></td>
+  <td><span class="badge b-p1">Priority 1</span></td>
+  <td><span class="badge b-keep">Keep P1</span></td>
+  <td class="mech-cell"><span class="mech-target">FGFR1 · FGFR2 · FGFR3 · FGFR4 (pan-FGFR)</span>Pan-FGFR inhibitor selected by FGFR mRNA overexpression. Biomarker-selected approach captures FGFR-overexpressing tumours including SDH-deficient GIST.</td>
+  <td class="ev-cell">Active trial NCT04595747:<br><a class="ev-link" href="https://www.dana-farber.org/clinical-trials/21-070" target="_blank">Dana-Farber →</a></td>
+  <td class="notes-cell">Most advanced FGFR inhibitor trial in FGFR-altered sarcomas/GIST. Results will inform the whole class including pemigatinib.</td>
+  <td class="pt-cell"><span class="badge b-pt-uncertain">If SDH confirmed</span><div class="drug-sub" style="margin-top:4px;">FGFR overexpression in SDH-deficient GIST.</div></td>
+</tr>
+
+<tr data-p="p1" data-s="sdh" data-d="keep" data-pt="sdh">
+  <td><div class="drug-name">Olaparib + Temozolomide</div><div class="drug-sub">combination</div></td>
+  <td><span class="badge b-sdh">SDH-deficient</span></td>
+  <td><span class="badge b-p1">Priority 1</span></td>
+  <td><span class="badge b-keep">Keep P1</span></td>
+  <td class="mech-cell"><span class="mech-target">PARP1/2 inhibition + DNA alkylation</span>SDH-loss creates BRCAness (functional HR deficiency via epigenetic silencing of HR genes). Olaparib blocks PARP repair; TMZ adds alkylation damage the tumour cannot fix.</td>
+  <td class="ev-cell">Case report only:<br><a class="ev-link" href="https://www.authorea.com/users/489778/articles/573363-metastatic-and-multiply-relapsed-sdh-deficient-gist-and-paraganglioma-displays-clinical-response-to-combined-poly-adp-ribose-polymerase-inhibition-and-temozolomide" target="_blank">Case report →</a></td>
+  <td class="notes-cell"><span class="fn">⚑ N=1 evidence only</span> Mechanistically compelling. Single case report is the only clinical data — interpret cautiously.</td>
+  <td class="pt-cell"><span class="badge b-pt-uncertain">If SDH confirmed</span><div class="drug-sub" style="margin-top:4px;">BRCAness only in SDH-deficient context.</div></td>
+</tr>
+
+<!-- ══════════════════════════════════════════
+     ADD TO PRIORITY 1
+══════════════════════════════════════════ -->
+<tr class="section-divider"><td colspan="8">Adding to Priority 1</td></tr>
+
+<tr data-p="p2" data-s="sdh" data-d="add" data-pt="sdh">
+  <td><div class="drug-name">Everolimus</div></td>
+  <td><span class="badge b-sdh">SDH-deficient</span></td>
+  <td><span class="badge b-p2">Priority 2</span></td>
+  <td><span class="badge b-add">Add to P1</span></td>
+  <td class="mech-cell"><span class="mech-target">mTORC1 inhibitor</span>Blocks mTORC1 downstream of PI3K/AKT. In SDH-deficient GIST, PTEN loss and pseudohypoxia-driven AKT activation make mTORC1 a relevant target. Different rationale from the failed imatinib + everolimus trial which was in KIT-mutant disease.</td>
+  <td class="ev-cell">ASCO PO 2024 (SDH-deficient GIST):<br><a class="ev-link" href="https://ascopubs.org/doi/abs/10.1200/PO-24-00497" target="_blank">ASCO PO 2024 →</a></td>
+  <td class="notes-cell"><span class="fn">⚑ Different from imat+everolimus failure</span> Prior negative result was in KIT-mutant disease. SDH-deficient has independent rationale via PTEN loss. New data justifies P1.</td>
+  <td class="pt-cell"><span class="badge b-pt-uncertain">If SDH confirmed</span><div class="drug-sub" style="margin-top:4px;">PTEN loss relevant in SDH-deficient context.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="sdh" data-d="add" data-pt="sdh">
+  <td><div class="drug-name">Belzutifan</div></td>
+  <td><span class="badge b-sdh">SDH-deficient</span></td>
+  <td><span class="badge b-p2">Priority 2</span></td>
+  <td><span class="badge b-add">Add to P1</span></td>
+  <td class="mech-cell"><span class="mech-target">HIF-2α inhibitor (VHL/EPAS1 pathway)</span>Directly blocks HIF-2α transcription factor. SDH-loss stabilises HIF-2α → pseudohypoxia programme. Most mechanistically direct agent for SDH-deficient GIST. FDA-approved in VHL disease.</td>
+  <td class="ev-cell">No GIST cohort results yet:<br><a class="ev-link" href="https://www.thelancet.com/journals/lanonc/article/PIIS1470-2045(25)00153-6/abstract" target="_blank">Lancet Oncol 2025 →</a><br><a class="ev-link" href="https://pubmed.ncbi.nlm.nih.gov/41124218/" target="_blank">PubMed →</a></td>
+  <td class="notes-cell">Strongest mechanistic rationale in SDH-deficient GIST. Setting corrected to SDH-deficient (not imat-resistant). GIST cohort results pending.</td>
+  <td class="pt-cell"><span class="badge b-pt-uncertain">If SDH confirmed</span><div class="drug-sub" style="margin-top:4px;">Most direct HIF-2α target — highest mechanistic priority if SDH confirmed.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="imat" data-d="add" data-pt="low">
+  <td><div class="drug-name">Bezuclastinib + Sunitinib</div><div class="drug-sub">combination</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p2">Priority 2</span></td>
+  <td><span class="badge b-add">Add to P1</span></td>
+  <td class="mech-cell"><span class="mech-target">KIT exon 17/18 (bezuclastinib) + KIT exon 13/14 (sunitinib)</span>Dual coverage of polyclonal KIT resistance landscape. Selective activation loop inhibitor combined with ATP-binding domain inhibitor simultaneously.</td>
+  <td class="ev-cell">ASCO 2024:<br><a class="ev-link" href="https://ascopubs.org/doi/10.1200/JCO.2024.42.16_suppl.11533" target="_blank">JCO 2024 suppl →</a><br>Expanded access: NCT06948955</td>
+  <td class="notes-cell">Combination only — bezuclastinib not developed as monotherapy. Expanded access programme available. Algorithm likely to assign combination.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Low rationale</span><div class="drug-sub" style="margin-top:4px;">Targets KIT secondary mutations — not present in this patient.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="imat" data-d="add" data-pt="pt">
+  <td><div class="drug-name">Rivoceranib + Paclitaxel</div><div class="drug-sub">combination</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p2">No</span></td>
+  <td><span class="badge b-add">Add to P1</span></td>
+  <td class="mech-cell"><span class="mech-target">VEGFR2 (rivoceranib) + microtubule stabiliser (paclitaxel)</span>Rivoceranib selectively inhibits VEGFR2; paclitaxel exploits P-glycoprotein overexpression — a drug efflux resistance mechanism in TKI-refractory GIST independent of KIT mutation.</td>
+  <td class="ev-cell">Phase II Korea: NCT05905887<div class="drug-sub">No results yet</div></td>
+  <td class="notes-cell">P-gp overexpression is a KIT-mutation-independent resistance mechanism. If patient has P-gp overexpression this combination retains rationale regardless of KIT mutation status.</td>
+  <td class="pt-cell"><span class="badge b-pt-relevant">Relevant</span><div class="drug-sub" style="margin-top:4px;">P-gp mechanism independent of KIT mutation. Worth considering.</div></td>
+</tr>
+
+<tr data-p="p1" data-s="imat" data-d="add" data-pt="low" class="s-imat" style="border-left:3px solid #5a9fd4;">
+  <td><div class="drug-name">CGT9486 + Sunitinib</div><div class="drug-sub">PEAK Phase III · added by Lola</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-new">New addition</span></td>
+  <td><span class="badge b-add">Add to P1</span></td>
+  <td class="mech-cell"><span class="mech-target">KIT exon 17/18 selective (CGT9486) + KIT exon 13/14 (sunitinib)</span>Same dual-coverage strategy as bezuclastinib + sunitinib — different compound. CGT9486 selectively inhibits KIT activation loop mutations; sunitinib covers ATP-binding domain simultaneously. Phase III underway.</td>
+  <td class="ev-cell">Phase 1 — Serrano et al.:<br><a class="ev-link" href="https://pubmed.ncbi.nlm.nih.gov/?term=Serrano+CGT9486+KIT+gastrointestinal+stromal+2023&sort=relevance" target="_blank">Nat Med 2023 →</a><br>Phase III: NCT05208047</td>
+  <td class="notes-cell">Most advanced next-gen trial in imat-resistant GIST. CBR ~50% in exon 17/18 mutants in Phase 1. Only Phase III agent targeting this resistance mechanism.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Low rationale</span><div class="drug-sub" style="margin-top:4px;">Targets KIT exon 17/18 secondary mutations — not present. Check trial eligibility — may enroll KIT IHC+ regardless of mutation.</div></td>
+</tr>
+
+<!-- ══════════════════════════════════════════
+     PRIORITY 2 — KEEP
+══════════════════════════════════════════ -->
+<tr class="section-divider"><td colspan="8">Remaining Priority 2</td></tr>
+
+<tr data-p="p2" data-s="imat" data-d="p2" data-pt="low">
+  <td><div class="drug-name">Ripretinib</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p2">Priority 2</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">KIT · PDGFRA switch-control inhibitor</span>Locks KIT/PDGFRA in inactive conformation. Broad-spectrum coverage of ATP-binding and activation loop mutations. Approved 4th-line.</td>
+  <td class="ev-cell">Phase III INVICTUS:<br><a class="ev-link" href="https://www.thelancet.com/journals/lanonc/article/PIIS1470-2045(20)30168-6/abstract" target="_blank">Lancet Oncol 2020 →</a></td>
+  <td class="notes-cell"><span class="fn">⚑ Why chosen?</span> KIT/PDGFRA specific — approved 4th-line. Less mechanistically novel than CGT9486/bezuclastinib combinations. Retain P2.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Low rationale</span><div class="drug-sub" style="margin-top:4px;">KIT/PDGFRA switch-control — no driver mutation to inhibit.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="imat" data-d="p2" data-pt="low">
+  <td><div class="drug-name">Sorafenib</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p2">Priority 2</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">KIT · VEGFR2/3 · PDGFR-β · RAF · RET</span>Multi-kinase inhibitor structurally related to regorafenib. KIT coverage with anti-angiogenic VEGFR activity.</td>
+  <td class="ev-cell"><a class="ev-link" href="https://pubmed.ncbi.nlm.nih.gov/23140824/" target="_blank">PubMed 2012 →</a><br><a class="ev-link" href="https://pubmed.ncbi.nlm.nih.gov/34949997/" target="_blank">PubMed 2021 →</a></td>
+  <td class="notes-cell">DCR 68–71% Phase II. Never achieved Phase III or approval. Reasonable later-line option where approved agents unavailable.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Low rationale</span><div class="drug-sub" style="margin-top:4px;">No KIT driver mutation. VEGFR activity only.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="imat" data-d="p2" data-pt="pt">
+  <td><div class="drug-name">Binimetinib + Imatinib</div><div class="drug-sub">combination</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p2">Priority 2</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">MEK1/2 inhibitor + KIT/PDGFRA</span>RAS/MAPK pathway reactivation is a bypass resistance mechanism in ~30% imatinib-resistant GIST and also relevant in NF1-deficient WT-GIST. More GIST-specific data than trametinib.</td>
+  <td class="ev-cell">Phase I/II NCT01991379:<br><a class="ev-link" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8937014/" target="_blank">PMC →</a></td>
+  <td class="notes-cell">Preferred over trametinib — more GIST-specific clinical data. If patient has NF1 loss or RAS pathway activation, MEK inhibition becomes more relevant.</td>
+  <td class="pt-cell"><span class="badge b-pt-relevant">Relevant</span><div class="drug-sub" style="margin-top:4px;">If NF1 loss identified as driver in this KIT-mutation-negative patient, MEK inhibition becomes high priority.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="imat" data-d="p2" data-pt="low">
+  <td><div class="drug-name">Pimitespib + Imatinib</div><div class="drug-sub">combination</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p2">Priority 2</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">HSP90 inhibitor</span>HSP90 chaperone required for KIT protein stability. Inhibition degrades KIT regardless of mutation — bypasses kinase-domain resistance. Improved selectivity vs earlier HSP90 inhibitors (AUY922, ganetespib) which failed.</td>
+  <td class="ev-cell">Phase I CHAPTER: NCT05245968<div class="drug-sub">No results yet</div></td>
+  <td class="notes-cell">Earlier HSP90 inhibitors failed in GIST. Pimitespib's improved tolerability justifies a second attempt. Watch for Phase I results.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Low rationale</span><div class="drug-sub" style="margin-top:4px;">KIT degradation still requires KIT expression — less relevant without KIT driver.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="imat" data-d="p2" data-pt="low">
+  <td><div class="drug-name">Avapritinib</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p2">Priority 2</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">KIT exon 17/18 · PDGFRA exon 18 (D842V)</span>Highly selective activation loop inhibitor. Standard of care for PDGFRA D842V (ORR 84–91%). In KIT-mutant resistant disease covers exon 17/18 — polyclonal resistance limits monotherapy.</td>
+  <td class="ev-cell">Phase I NAVIGATOR:<br><a class="ev-link" href="https://pubmed.ncbi.nlm.nih.gov/?term=Heinrich+avapritinib+NAVIGATOR+PDGFRA+GIST+2020&sort=relevance" target="_blank">Search PubMed →</a></td>
+  <td class="notes-cell"><span class="fn">⚑ Mutation-specific</span> Transformative in PDGFRA D842V. In broader imat-resistant KIT-mutant disease — P2 appropriate. No PDGFRA mutation in this patient.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Low rationale</span><div class="drug-sub" style="margin-top:4px;">No KIT or PDGFRA D842V mutation. Primary target absent.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="sdh" data-d="p2" data-pt="sdh">
+  <td><div class="drug-name">Azacytidine</div></td>
+  <td><span class="badge b-sdh">SDH-deficient</span></td>
+  <td><span class="badge b-p2">Priority 2</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">DNMT1/3A/3B inhibitor (cytidine analogue)</span>Incorporates into RNA and DNA; traps and degrades DNMTs → reverses global CpG hypermethylation caused by SDH-loss. Upstream reverser of epigenetic programme.</td>
+  <td class="ev-cell">Guadecitabine Phase II (same class — negative):<br><a class="ev-link" href="https://aacrjournals.org/clincancerres/article-abstract/29/2/341/713965/" target="_blank">Clin Cancer Res 2023 →</a></td>
+  <td class="notes-cell"><span class="fn">⚑ Class signal negative</span> Guadecitabine (superior DNMTi) failed Phase II in SDH-deficient GIST. Significantly weakens monotherapy rationale. Retain P2 — combination with belzutifan may salvage.</td>
+  <td class="pt-cell"><span class="badge b-pt-uncertain">If SDH confirmed</span><div class="drug-sub" style="margin-top:4px;">Class signal negative. Low confidence even if SDH confirmed.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="sdh" data-d="p2" data-pt="sdh">
+  <td><div class="drug-name">Erdafitinib</div></td>
+  <td><span class="badge b-sdh">SDH-deficient</span></td>
+  <td><span class="badge b-p2">Priority 2</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">FGFR1 · FGFR2 · FGFR3 · FGFR4 (pan-FGFR)</span>Pan-FGFR inhibitor. Less selective than pemigatinib — covers FGFR4 which is less relevant in SDH-deficient GIST. Weaker mechanistic fit than pemigatinib.</td>
+  <td class="ev-cell">Basket trials only — no GIST-specific data</td>
+  <td class="notes-cell">Backup FGFR inhibitor option. Pemigatinib preferred for SDH-deficient GIST due to FGFR1/2 selectivity.</td>
+  <td class="pt-cell"><span class="badge b-pt-uncertain">If SDH confirmed</span><div class="drug-sub" style="margin-top:4px;">Weaker than pemigatinib for this biology.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="sdh" data-d="p2" data-pt="sdh">
+  <td><div class="drug-name">Decitabine</div></td>
+  <td><span class="badge b-sdh">SDH-deficient</span></td>
+  <td><span class="badge b-p2">Priority 2</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">DNMT1/3 inhibitor (DNA-selective)</span>DNA-selective demethylation. Guadecitabine is a prodrug of decitabine — the Phase II failure in SDH-deficient GIST directly applies to this agent.</td>
+  <td class="ev-cell">Guadecitabine Phase II (prodrug of this — negative):<br><a class="ev-link" href="https://aacrjournals.org/clincancerres/article-abstract/29/2/341/713965/" target="_blank">Clin Cancer Res 2023 →</a></td>
+  <td class="notes-cell"><span class="fn">⚑ Guadecitabine is prodrug of decitabine — negative result directly applies</span> Oral form (ASTX727) could enable combinations. Monotherapy unlikely to advance.</td>
+  <td class="pt-cell"><span class="badge b-pt-uncertain">If SDH confirmed</span><div class="drug-sub" style="margin-top:4px;">Very low confidence — class failed directly.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="imat" data-d="p2" data-pt="low">
+  <td><div class="drug-name">Pazopanib</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p2">Priority 2</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">VEGFR1–3 · PDGFR-α/β · FGFR1/3 · KIT</span>Multi-kinase inhibitor. Weakest KIT IC50 of any agent on this list. Specifically excluded from EORTC sarcoma trials due to poor GIST activity. Black box hepatotoxicity warning.</td>
+  <td class="ev-cell">Retrospective series only<div class="drug-sub">DCR ~44% — no positive Phase II</div></td>
+  <td class="notes-cell"><span class="fn">⚑ Hepatotoxicity black box</span> Weakest agent on list. Excluded from sarcoma trials. Distant last resort only — inferior to sorafenib in GIST.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Low rationale</span><div class="drug-sub" style="margin-top:4px;">Poor KIT activity + no KIT driver + hepatotoxicity risk.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="imat" data-d="p2" data-pt="low">
+  <td><div class="drug-name">IDRX-42</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p2">No</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">KIT exon 11/13/14/17/18 · PDGFRA</span>Next-gen KIT inhibitor with broad coverage of primary and secondary resistance mutations. Phase III vs sunitinib underway (NCT07218926).</td>
+  <td class="ev-cell">Phase I: NCT05489237<br>Phase III: NCT07218926<div class="drug-sub">No published results</div></td>
+  <td class="notes-cell">If Phase III positive, potential new 2nd-line standard. Broader coverage than sunitinib. Watch Phase I data.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Low rationale</span><div class="drug-sub" style="margin-top:4px;">Targets KIT mutations — absent in this patient.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="imat" data-d="p2" data-pt="low">
+  <td><div class="drug-name">NN3201</div><div class="drug-sub">anti-KIT ADC</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p2">No</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">Anti-KIT antibody-drug conjugate</span>KIT-targeted ADC delivers cytotoxic payload to KIT-expressing cells. Bypasses kinase-domain resistance — mutation-agnostic. First-in-class KIT ADC.</td>
+  <td class="ev-cell">Phase I: NCT06805825<div class="drug-sub">No results yet</div></td>
+  <td class="notes-cell">Mutation-agnostic mechanism could be active in all KIT IHC+ GIST. Very early stage.</td>
+  <td class="pt-cell"><span class="badge b-pt-relevant">Potentially relevant</span><div class="drug-sub" style="margin-top:4px;">KIT IHC+ is sufficient target expression for ADC. Mutation-agnostic — worth watching.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="imat" data-d="p2" data-pt="low">
+  <td><div class="drug-name">Ziftomenib + Imatinib</div><div class="drug-sub">combination</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p2">No</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">KAT6A/B · menin-KMT2A inhibitor (epigenetic)</span>Approved in relapsed/refractory AML with NPM1 mutations. Epigenetic approach to prevent adaptive TKI resistance. KAT6 inhibition may block imatinib tolerance mechanisms.</td>
+  <td class="ev-cell">Phase I: NCT06655246<div class="drug-sub">No results yet</div></td>
+  <td class="notes-cell">Theoretical epigenetic rationale. Very early stage. Novel mechanism worth monitoring.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Low rationale</span><div class="drug-sub" style="margin-top:4px;">Epigenetic prevention of imatinib resistance — no imatinib driver here.</div></td>
+</tr>
+
+<tr data-p="p2" data-s="imat" data-d="p2" data-pt="low">
+  <td><div class="drug-name">Binimetinib</div><div class="drug-sub">via Lenvatinib trial NCT07096609</div></td>
+  <td><span class="badge b-imat">Imat-resistant</span></td>
+  <td><span class="badge b-p2">No</span></td>
+  <td><span class="badge b-p2">Keep P2</span></td>
+  <td class="mech-cell"><span class="mech-target">VEGFR1–3 · FGFR1–4 · PDGFRα · RET · KIT</span>Broad multi-kinase with strong VEGFR and FGFR1–4 coverage. Phase 1/2 in ≥3rd-line imat-resistant GIST.</td>
+  <td class="ev-cell">Phase I/II: NCT07096609<div class="drug-sub">No results yet</div></td>
+  <td class="notes-cell">VEGFR/FGFR coverage relevant in both imat-resistant and SDH-deficient settings. Broader FGFR coverage than pemigatinib.</td>
+  <td class="pt-cell"><span class="badge b-pt-uncertain">Possibly relevant</span><div class="drug-sub" style="margin-top:4px;">VEGFR/FGFR activity independent of KIT mutation status.</div></td>
+</tr>
+
+<!-- ══════════════════════════════════════════
+     REMOVE
+══════════════════════════════════════════ -->
+<tr class="section-divider"><td colspan="8">Removing from list</td></tr>
+
+<tr data-p="p1" data-s="" data-d="remove" data-pt="low">
+  <td><div class="drug-name">Trametinib</div></td>
+  <td><span style="color:var(--text-dim); font-size:11px;">Various</span></td>
+  <td><span class="badge b-p1">Priority 1 (Kyan)</span></td>
+  <td><span class="badge b-remove">Remove</span></td>
+  <td class="mech-cell"><span class="mech-target">MEK1/2 inhibitor</span>Same mechanism as binimetinib. Binimetinib has more GIST-specific clinical data and an active Phase I/II combination trial with imatinib.</td>
+  <td class="ev-cell">Case reports + basket trials only</td>
+  <td class="notes-cell">Removed in favour of binimetinib which has more GIST-specific data. Mechanistic overlap makes both unnecessary.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Removed</span></td>
+</tr>
+
+<tr data-p="p1" data-s="" data-d="remove" data-pt="low">
+  <td><div class="drug-name">Alpelisib</div></td>
+  <td><span style="color:var(--text-dim); font-size:11px;">Various</span></td>
+  <td><span class="badge b-p1">Priority 1 (Kyan)</span></td>
+  <td><span class="badge b-remove">Remove</span></td>
+  <td class="mech-cell"><span class="mech-target">PI3Kα selective inhibitor</span>Blocks PI3K/AKT/mTOR upstream. Tempus VAF very low — likely not a driver mutation. No GIST-specific clinical data.</td>
+  <td class="ev-cell">No GIST data. PIK3CA mutation frequency in GIST low.</td>
+  <td class="notes-cell">Removed — Tempus VAF very low, not a confirmed driver. No clinical validation. PI3K pathway better addressed by everolimus in SDH-deficient context.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Removed</span></td>
+</tr>
+
+<tr data-p="p1" data-s="" data-d="remove" data-pt="low">
+  <td><div class="drug-name">OPB-171775 (MTX240)</div></td>
+  <td><span class="badge b-sdh">SDH-deficient</span></td>
+  <td><span class="badge b-p1">Priority 1 (Kyan)</span></td>
+  <td><span class="badge b-remove">Remove</span></td>
+  <td class="mech-cell"><span class="mech-target">STAT3 inhibitor (preclinical)</span>Novel STAT3 pathway inhibitor. Phase 1-ready but not yet recruiting. Cannot be used in a drug test without clinical trial access.</td>
+  <td class="ev-cell">No clinical trial yet. Press release only.</td>
+  <td class="notes-cell">Removed — not in clinic. Revisit when Phase I opens.</td>
+  <td class="pt-cell"><span class="badge b-pt-low">Removed</span></td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+<footer>
+  Compiled from Lola &amp; Kyan drug lists · Final version · Patient: KIT IHC+, no KIT mutation, no PDGFRA mutation, SDHA VUS, SDHB IHC+ (retained), SDHA IHC pending · Guadecitabine reference: Pantaleo et al. Clin Cancer Res 2023 (Phase II SDH-deficient GIST — negative) · PubMed search links used where direct DOIs not confirmed · Abbreviations: SDH = succinate dehydrogenase · DNMT = DNA methyltransferase · HIF = hypoxia-inducible factor · ADC = antibody-drug conjugate · DCR = disease control rate · ORR = objective response rate · VUS = variant of uncertain significance · P-gp = P-glycoprotein · IHC = immunohistochemistry
+</footer>
+
+<script>
+function f(filter, event) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  const rows = document.querySelectorAll('#dt tbody tr:not(.section-divider)');
+  let count = 0;
+  rows.forEach(row => {
+    let show = false;
+    const p = row.dataset.p, s = row.dataset.s, d = row.dataset.d, pt = row.dataset.pt;
+    if (filter === 'all')    show = true;
+    else if (filter === 'p1')     show = p === 'p1';
+    else if (filter === 'p2')     show = p === 'p2';
+    else if (filter === 'sdh')    show = s === 'sdh';
+    else if (filter === 'imat')   show = s === 'imat';
+    else if (filter === 'add')    show = d === 'add';
+    else if (filter === 'remove') show = d === 'remove';
+    else if (filter === 'pt')     show = pt === 'pt' || pt === 'sdh';
+    if (show) { row.classList.remove('hidden'); count++; }
+    else { row.classList.add('hidden'); }
+  });
+  document.querySelectorAll('.section-divider').forEach(d => d.classList.remove('hidden'));
+  document.getElementById('rc').textContent = count;
+}
+</script>
+</body>
+</html>
